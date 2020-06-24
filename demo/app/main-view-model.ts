@@ -20,7 +20,7 @@ export class HelloWorldModel extends Observable {
     this._videoPlayer = <any>mainpage.getViewById("nativeVideoPlayer");
     this.currentTime = "";
     this.videoDuration = "";
-    this.videoSrc = "~/videos/big_buck_bunny.mp4";
+    this.videoSrc = "https://file-examples.com/wp-content/uploads/2017/04/file_example_MP4_1280_10MG.mp4";
     this.subtitlesSrc = "~/videos/sample.srt";
     this.trackVideoCurrentPosition();
   }

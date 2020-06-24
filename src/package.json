@@ -91,5 +91,9 @@
   },
   "devDependencies": {
     "typescript": "file:../demo/node_modules/typescript"
+  },
+  "dependencies": {
+    "nativescript-screen-orientation": "^2.0.0",
+    "tns-platform-declarations": "^6.5.8"
   }
 }

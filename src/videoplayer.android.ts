@@ -1,8 +1,10 @@
-﻿
+
 
 import { Video as VideoBase, VideoFill, videoSourceProperty, subtitleSourceProperty } from "./videoplayer-common";
+import * as orientationModule from "nativescript-screen-orientation";
 import * as nsUtils from "tns-core-modules/utils/utils";
 import * as nsApp from "tns-core-modules/application";
+import * as utils from "tns-core-modules/utils/utils";
 
 export * from "./videoplayer-common";
 
@@ -44,6 +46,7 @@ export class Video extends VideoBase {
 	public TYPE = { DETECT: 0, SS: 1, DASH: 2, HLS: 3, OTHER: 4 };
 	public nativeView: any;
 
+	private _fullscreen = false;
 
 	constructor() {
 		super();
@@ -311,7 +314,7 @@ export class Video extends VideoBase {
 	private _setupMediaController(): void {
 		if (this.controls !== false || this.controls === undefined) {
 			if (this.mediaController == null) {
-				this.mediaController = new com.google.android.exoplayer2.ui.PlaybackControlView(this._context);
+				this.mediaController = <android.view.View>new com.google.android.exoplayer2.ui.PlaybackControlView(this._context);
 				this.nativeView.addView(this.mediaController);
 
 				let params = this.mediaController.getLayoutParams();
@@ -319,6 +322,52 @@ export class Video extends VideoBase {
 				params.addRule(12); // Align bottom
 
 				this.mediaController.setLayoutParams(params);
+
+				const fullscreenIcon = this.mediaController.findViewById('exo_fullscreen_icon');
+				const icExitFullScreen = utils.ad.resources.getDrawableId('ic_fullscreen_open');
+
+				console.log(fullscreenIcon);
+				const fullscreenButton: android.widget.ImageView = this.mediaController.findViewById(fullscreenIcon);
+
+				if(fullscreenButton) {
+					// Interfaces decorator with implemented interfaces on this class
+					@Interfaces([android.view.View.OnClickListener])
+					class FullScreenClickListener extends java.lang.Object implements android.view.View.OnClickListener {
+						public fullscreen = false;
+							constructor() {
+									super();
+									// Required by android runtime when native class is extended through TypeScript.
+									return global.__native(this);
+							}
+
+							public onClick(v: android.widget.ImageView): void {
+								if(this.fullscreen) {
+									orientationModule.setCurrentOrientation('portrait', () => {
+										const icExitFullScreen = utils.ad.resources.getDrawableId('ic_fullscreen_open');
+										v.setImageDrawable(icExitFullScreen);
+										let window = nsApp.android.startActivity.getWindow();
+										let decorView = window.getDecorView();
+										decorView.setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_VISIBLE);
+										this.fullscreen = true;
+									})
+								}else{
+									orientationModule.setCurrentOrientation('landscape', () => {
+										const icExitFullScreen = utils.ad.resources.getDrawableId('ic_fullscreen_close');
+										v.setImageDrawable(icExitFullScreen);
+										let window = nsApp.android.startActivity.getWindow();
+										let decorView = window.getDecorView();
+										decorView.setSystemUiVisibility(
+											android.view.View.SYSTEM_UI_FLAG_FULLSCREEN |
+											android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+											);
+										this.fullscreen = false;
+									});
+							}
+
+						}
+					}
+					fullscreenButton.setOnClickListener(new FullScreenClickListener())
+				}
 			} else {
 				return;
 			}
