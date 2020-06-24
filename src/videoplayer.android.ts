@@ -315,6 +315,58 @@ export class Video extends VideoBase {
 		if (this.controls !== false || this.controls === undefined) {
 			if (this.mediaController == null) {
 				this.mediaController = <android.view.View>new com.google.android.exoplayer2.ui.PlaybackControlView(this._context);
+
+				const pkgName = this.mediaController.getContext().getPackageName();
+				const iconid = this.mediaController.getContext().getResources().getIdentifier("exo_fullscreen_icon", "id", pkgName);
+				const fullscreenButton: android.widget.ImageView = this.mediaController.findViewById(iconid);
+
+				if(fullscreenButton) {
+					const playerView = this.nativeView;
+					// Interfaces decorator with implemented interfaces on this class
+					@Interfaces([android.view.View.OnClickListener])
+					class ClickListener extends java.lang.Object implements android.view.View.OnClickListener {
+						public fullscreen = false;
+						constructor() {
+							super();
+							// Required by android runtime when native class is extended through TypeScript.
+							return global.__native(this);
+						}
+
+						public onClick(v: android.widget.ImageView): void {
+
+							if(this.fullscreen) {
+								orientationModule.setCurrentOrientation('portrait', () => {
+									const icExitFullScreen = utils.ad.resources.getDrawableId('ic_fullscreen_open');
+									v.setImageResource(icExitFullScreen);
+									let window = nsApp.android.startActivity.getWindow();
+									let decorView = window.getDecorView();
+									decorView.setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_VISIBLE);
+									
+								})
+							}else{
+								orientationModule.setCurrentOrientation('landscape', () => {
+									const icExitFullScreen = utils.ad.resources.getDrawableId('ic_fullscreen_close');
+									v.setImageResource(icExitFullScreen);
+									let window = nsApp.android.startActivity.getWindow();
+									let decorView = window.getDecorView();
+									decorView.setSystemUiVisibility(
+										android.view.View.SYSTEM_UI_FLAG_FULLSCREEN |
+										android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+										android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+									);
+									
+									// let params = playerView.getLayoutParams();
+									// params.width = params.MATCH_PARENT;
+									// params.height = params.MATCH_PARENT;
+									// playerView.setLayoutParams(params);
+								});
+							}
+							this.fullscreen = !this.fullscreen;
+						}
+					}
+					fullscreenButton.setOnClickListener(new ClickListener())
+				}
+
 				this.nativeView.addView(this.mediaController);
 
 				let params = this.mediaController.getLayoutParams();
@@ -322,52 +374,6 @@ export class Video extends VideoBase {
 				params.addRule(12); // Align bottom
 
 				this.mediaController.setLayoutParams(params);
-
-				const fullscreenIcon = this.mediaController.findViewById('exo_fullscreen_icon');
-				const icExitFullScreen = utils.ad.resources.getDrawableId('ic_fullscreen_open');
-
-				console.log(fullscreenIcon);
-				const fullscreenButton: android.widget.ImageView = this.mediaController.findViewById(fullscreenIcon);
-
-				if(fullscreenButton) {
-					// Interfaces decorator with implemented interfaces on this class
-					@Interfaces([android.view.View.OnClickListener])
-					class FullScreenClickListener extends java.lang.Object implements android.view.View.OnClickListener {
-						public fullscreen = false;
-							constructor() {
-									super();
-									// Required by android runtime when native class is extended through TypeScript.
-									return global.__native(this);
-							}
-
-							public onClick(v: android.widget.ImageView): void {
-								if(this.fullscreen) {
-									orientationModule.setCurrentOrientation('portrait', () => {
-										const icExitFullScreen = utils.ad.resources.getDrawableId('ic_fullscreen_open');
-										v.setImageDrawable(icExitFullScreen);
-										let window = nsApp.android.startActivity.getWindow();
-										let decorView = window.getDecorView();
-										decorView.setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_VISIBLE);
-										this.fullscreen = true;
-									})
-								}else{
-									orientationModule.setCurrentOrientation('landscape', () => {
-										const icExitFullScreen = utils.ad.resources.getDrawableId('ic_fullscreen_close');
-										v.setImageDrawable(icExitFullScreen);
-										let window = nsApp.android.startActivity.getWindow();
-										let decorView = window.getDecorView();
-										decorView.setSystemUiVisibility(
-											android.view.View.SYSTEM_UI_FLAG_FULLSCREEN |
-											android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-											);
-										this.fullscreen = false;
-									});
-							}
-
-						}
-					}
-					fullscreenButton.setOnClickListener(new FullScreenClickListener())
-				}
 			} else {
 				return;
 			}
